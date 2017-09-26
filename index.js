@@ -1,7 +1,5 @@
-
 $(document).ready(function() {
-  // $('.flag').tooltip();
-  $.ajax({
+   $.ajax({
     url: 'https://raw.githubusercontent.com/DealPete/forceDirected/master/countries.json',
     dataType: 'json',
     error: (xhr,errorType) => {
@@ -26,7 +24,7 @@ $(document).ready(function() {
         }
 
       function keepInHeight(y) {
-        if (y < 5) {return 20}
+        if (y < 10) {return 20}
           else if (y > height) {return height - 20}
             else {return y}
           }  
@@ -41,15 +39,19 @@ $(document).ready(function() {
           .merge(u)
           .attr('x1', function(d) {
             return keepInWidth(d.source.x)
+            // return d.source.x
           })
           .attr('y1', function(d) {
             return keepInHeight(d.source.y)
+            // return d.source.y
           })
           .attr('x2', function(d) {
             return keepInWidth(d.target.x)
+            // return d.target.x
           })
           .attr('y2', function(d) {
             return keepInHeight(d.target.y)
+            // return d.target.y
           })
 
           u.exit().remove()
@@ -74,42 +76,65 @@ $(document).ready(function() {
 
         function updateNodes() {
           var u = d3.select('.nodes')
-          .selectAll('foreignObject')
+          .selectAll('image')
           .data(nodes)
 
           u.enter()
-          .append('foreignObject')
+          .append('svg:image')
           .merge(u)
           .attr('x', (d) => keepInWidth(d.x)-8)
           .attr('y', (d) => keepInHeight(d.y)-11)
-          .attr('width',16)
-          .attr('height',20)
-          .append('xhtml:img')    
-          .attr('src','blank.gif')
-          .attr('title',(d) => d.country)
-          .attr('data-toggle','tooltip')
-          .attr('class', (d) => 'flag flag-'+d['code'])
-
-
-
-          u.exit().remove()
+          .attr('width',20)
+          .attr('height',14)
+          .attr('xlink:href', (d) => 'flags/'+d['code']+'.png')
+           .exit().remove()
         }
 
-//highlight neighbours
+function updateRect() {
+  var u = d3.select('.nodes')
+      .selectAll('rect')
+            .data(nodes)
+          
+          u.enter()
+          .append('svg:rect')
+          .merge(u)
+          .attr('x', (d) => keepInWidth(d.x)-8)
+          // .attr('x', (d) => d.x-8)
+          .attr('y', (d) => keepInHeight(d.y)-11)
+          // .attr('y', (d) => d.y-11)
+          .attr('width',20)
+          .attr('height',14)
+          .attr('stroke','none')
+          .attr('stroke-width',2)
+          .attr('fill','none')
+          .attr('class',(d) => d['code'])
+          .exit().remove()
+      }
+
+//highlight neighbours and show tooltip
 function highlight() {
   var u = d3.select('.nodes')
-  u.selectAll('foreignObject')
+  u.selectAll('image')
   .data(nodes)
   .on('mouseover',(d,i) => {
+    u.append('title')
+    .attr('x', keepInWidth(d.x)+10)
+    .attr('y', keepInHeight(d.y)-11)
+    .attr('width',80)
+    .attr('height',40)
+    .text(d['country'])
+
    var neighbours = findNeighbour(i);
    for (var j=0;j<neighbours.length;j++) {
-    $('.flag-'+neighbours[j]).addClass('highlight')       
+    $('.'+neighbours[j]).addClass('highlight')       
   }
 })
   .on('mouseout',(d,i) => {
+    var u = d3.select('.nodes')
+    u.selectAll('title').remove()
     var neighbours = findNeighbour(i);
     for (var j=0;j<neighbours.length;j++) {
-      $('.flag-'+neighbours[j]).removeClass('highlight')
+      $('.'+neighbours[j]).removeClass('highlight')
     }
   })
 }
@@ -117,6 +142,7 @@ function highlight() {
 function ticked() {
   updateLinks()
   updateNodes()
+  updateRect()
   highlight()
 }
 }                                  
